@@ -1,66 +1,71 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-	<meta charset="utf-8"/>
-	<title>Kakao 지도 시작하기</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>카카오맵 랜덤 위치</title>
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey={YOUR_API_KEY}&libraries=services"></script>
+    <style>
+        #map {
+            width: 100%;
+            height: 500px;
+        }
+    </style>
 </head>
-
 <body>
-    <button onclick="fetchRandomLocation()">랜덤 굴리기</button>
-	<div id="map" style="width:500px;height:400px;"></div>
-    <p id ="location-info"></p>
-	<script type="text/javascript" src=//dapi.kakao.com/v2/maps/sdk.js?appkey={YOUR_API_KEY}&libraries=services"></script>
+    <h1>랜덤 위치 표시</h1>
+    <button onclick="fetchRandomLocation()">무작위 위치 가져오기</button>
+    <div id="map"></div>
+    <p id="location-info"></p>
 
-	<script>
-		var container = document.getElementById('map');
-		var options = {
-			center: new kakao.maps.LatLng(33.450701, 126.570667),
-			level: 3
-		};
-
-		var map = new kakao.maps.Map(container, options);
-
+    <script>
         function getRandomLocation() {
-            let lat = (Math.random() * (38-34.5) + 34.5).toFixed(4)
-            let lng = (Math.random() * (128.3 - 126.5) + 126.6).toFixed(4)
-            return {
-                lat: parseFloat(lat),
-                lng: parseFloat(lng)
-            }
+            let lot = (Math.random() * (38 - 34.5) + 34.5).toFixed(4);
+            let lat = (Math.random() * (128.3 - 126.5) + 126.5).toFixed(4);
+            return { lat: parseFloat(lot), lng: parseFloat(lat) };
         }
 
         function fetchRandomLocation() {
+            if (typeof kakao === "undefined" || !kakao.maps) {
+                console.error("카카오 맵 API가 로드되지 않았습니다.");
+                return;
+            }
+            
             let location = getRandomLocation();
-            var geocoder = new kakao.maps.services.Geocoder();
+            let geocoder = new kakao.maps.services.Geocoder();
+            
             geocoder.coord2Address(location.lng, location.lat, function(result, status) {
                 if (status === kakao.maps.services.Status.OK) {
-                    let address = result[0]?.address?.address_name || "주소 정보를 찾을 수 없습니다.";
-                    updateMap(location.lat, location.lng, address)
+                    let address = result[0]?.address?.address_name.split(" ").slice(0, 2).join(" ") || "주소 정보를 가져올 수 없습니다.";
+                    initMap(location.lat, location.lng, address);
                 }
-            })
-            document.getElementById("location-info").innerText = `위도: ${location.lat}, 경도: ${location.lng}`
+            });
         }
-        
-        function updateMap(lat, lng, address) {
+
+        function initMap(lat, lng, address) {
             var container = document.getElementById('map');
             var options = {
                 center: new kakao.maps.LatLng(lat, lng),
-                level: 3
+                level: 7
             };
+            var map = new kakao.maps.Map(container, options);
 
             var marker = new kakao.maps.Marker({
                 position: new kakao.maps.LatLng(lat, lng)
             });
+            marker.setMap(map);
 
             var infowindow = new kakao.maps.InfoWindow({
-                content: `<div style='padding:5px; width:100%'>${address}</div>`
+                content: `<div class='infowindow' style='padding:5px;'>${address}</div>`
             });
-
-		    var map = new kakao.maps.Map(container, options);
-
             infowindow.open(map, marker);
-            marker.setMap(map);
+            
+            document.getElementById("location-info").innerText = `위도: ${lat}, 경도: ${lng}\n주소: ${address}`;
         }
-	</script>
+
+        window.onload = function() {
+            fetchRandomLocation();
+        };
+    </script>
 </body>
 </html>
